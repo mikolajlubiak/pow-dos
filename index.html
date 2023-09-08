@@ -1,0 +1,46 @@
+<html>
+	<script>
+		async function sha512(message) {
+			// encode as UTF-8
+			const msgBuffer = new TextEncoder().encode(message);
+
+			// hash the message
+			const hashBuffer = await crypto.subtle.digest('SHA-512', msgBuffer);
+
+			// convert ArrayBuffer to Array
+			const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+			// convert bytes to hex string
+			const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+			return hashHex;
+		}
+		(async () => {
+			let challenge = 'EXAMPLE';
+			let difficulty = DIFFICULTY;
+			let nonce = 0;
+			while(true){
+				let msg = await sha512(challenge + nonce);
+				let firstX = msg.substring(0, difficulty);
+				if(parseInt(firstX, 16) === 0)
+				{
+					fetch("http://localhost:8000/", {
+						method: "POST",
+						body: JSON.stringify({
+							challenge: challenge,
+							nonce: nonce,
+							hash: msg,
+						}),
+						headers: {
+							"Content-type": "application/json; charset=UTF-8"
+						}
+					});
+					console.log('good')
+					break;
+				}
+				nonce++;
+			}
+		})().catch(e => {
+			console.log('bad')
+		});
+	</script>
+</html>
