@@ -6,7 +6,7 @@ import string
 import hashlib
 
 challenge = ''.join(random.choices(string.ascii_lowercase, k=64))
-difficulty = 5
+difficulty = 4
 
 # Define the handler for GET and POST requests
 class MyHandler(http.server.BaseHTTPRequestHandler):
@@ -28,7 +28,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         # Set response status code and headers
         self.send_response(HTTPStatus.OK)
-        self.send_header('Content-type', 'text/html')
+        self.send_header('Content-type', 'text/plain')
         self.end_headers()
 
         # Read and process POST data as JSON
@@ -39,15 +39,13 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
             # Process the POST request and send a response
             msg = challenge + str(post_params['nonce'])
-            hex_hash = hashlib.sha512(msg.encode()).hexdigest()
+            response_message = 'bad'
             if (
                     post_params['challenge'] == challenge and
-                    post_params['hash'].startswith('0'*difficulty) and
-                    hex_hash == post_params['hash']
+                    post_params['hash'].startswith('0'*difficulty)
                     ):
-                response_message = 'good'
-            else:
-                response_message = 'bad'
+                if hashlib.sha512(msg.encode()).hexdigest() == post_params['hash']:
+                    response_message = 'good'
 
             self.wfile.write(response_message.encode('utf-8'))
         except Exception as e:
